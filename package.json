@@ -1,0 +1,23 @@
+{
+  "name": "upsource-to-slack",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JimmyLoveSiren/upsource-to-slack.git"
+  },
+  "author": "JimmyLoveSiren",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JimmyLoveSiren/upsource-to-slack/issues"
+  },
+  "homepage": "https://github.com/JimmyLoveSiren/upsource-to-slack#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "lodash": "^4.17.11"
+  }
+}
