@@ -14,7 +14,11 @@ const config = {
 
 const app = express();
 app.use(bodyParser.json());
-app.post('/', (req, res) => {
+app.get('*', (req, res) => {
+	res.sendFile('index.html', {root: 'www'},
+		err => err && res.sendStatus(404));
+});
+app.post('*', (req, res) => {
 	const payload = upsourceToSlack(req.body);
 	if (payload) {
 		request.post({url: config.slack, json: payload});
@@ -22,7 +26,7 @@ app.post('/', (req, res) => {
 	res.end();
 });
 app.listen(config.port);
-console.log("listening on port " + config.port);
+console.log('listening on port ' + config.port);
 
 function upsourceToSlack(body) {
 	const dataType = _.get(body, 'dataType');
