@@ -1,0 +1,11 @@
+{
+	"port": 3000,
+	"presets": {
+		"example": {
+			"slack": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+			"channel": "#channel or @user (optional)",
+			"color": "#fe8202",
+			"upsource": "http://your.upsource.server/"
+		}
+	}
+}

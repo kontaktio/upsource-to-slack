@@ -11,37 +11,53 @@
 </head>
 <body>
 <div>
-	<label>
-		<span>Slack Webhook URL</span>
-		<input id="slack" oninput="update()"
-		       placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX">
-	</label>
+	<p>
+		<label>
+			<span>Slack Webhook URL</span>
+			<input id="slack" oninput="update()"
+			       placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX">
+		</label>
+	</p>
+	<p>
+		<label>
+			<span>Channel</span>
+			<input id="channel" oninput="update()"
+			       placeholder="#channel, @user or empty for webhook default channel">
+		</label>
+	</p>
+	<p>
+		<label>
+			<span>Upsource Home URL</span>
+			<input id="upsource" oninput="update()"
+			       placeholder="http://your.upsource.server/">
+		</label>
+	</p>
+	<p>
+		<label>
+			<span>Upsource-to-Slack URL</span>
+			<input id="host" oninput="update()">
+		</label>
+	</p>
+	<p>
+		<label>
+			<button onclick="copy()">Copy</button>
+			<input id="result" readonly>
+		</label>
+	</p>
 </div>
 <div>
-	<label>
-		<span>Channel</span>
-		<input id="channel" oninput="update()"
-		       placeholder="#channel, @user or empty for webhook default channel">
-	</label>
-</div>
-<div>
-	<label>
-		<span>Upsource Home URL</span>
-		<input id="upsource" oninput="update()"
-		       placeholder="http://your.upsource.server/">
-	</label>
-</div>
-<div>
-	<label>
-		<span>Upsource-to-Slack URL</span>
-		<input id="host" oninput="update()">
-	</label>
-</div>
-<div>
-	<label>
-		<button onclick="copy()">Copy</button>
-		<input id="result" readonly>
-	</label>
+	<p>Loaded Presets</p>
+	<ul>
+		<% for [key, value] in @presets: %>
+		<li>
+			<% if value?.upsource: %>
+			<a href="<%- value.upsource %>"><span><%= key %></span></a>
+			<% else: %>
+			<span><%= key %></span>
+			<% end %>
+		</li>
+		<% end %>
+	</ul>
 </div>
 <script>
 	const slack = document.getElementById('slack');
