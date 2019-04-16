@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Upsource to Slack</title>
+	<style>
+		input {
+			width: 100%;
+		}
+	</style>
+</head>
+<body>
+<div>
+	<label>
+		<span>Slack Webhook URL</span>
+		<input id="slack" oninput="update()"
+		       placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX">
+	</label>
+</div>
+<div>
+	<label>
+		<span>Channel</span>
+		<input id="channel" oninput="update()"
+		       placeholder="#channel, @user or empty for webhook default channel">
+	</label>
+</div>
+<div>
+	<label>
+		<span>Upsource Home URL</span>
+		<input id="upsource" oninput="update()"
+		       placeholder="http://your.upsource.server/">
+	</label>
+</div>
+<div>
+	<label>
+		<span>Upsource-to-Slack URL</span>
+		<input id="host" oninput="update()">
+	</label>
+</div>
+<div>
+	<label>
+		<button onclick="copy()">Copy</button>
+		<input id="result" readonly>
+	</label>
+</div>
+<script>
+	const slack = document.getElementById('slack');
+	const channel = document.getElementById('channel');
+	const upsource = document.getElementById('upsource');
+	const host = document.getElementById('host');
+	const result = document.getElementById('result');
+	host.placeholder = `${location.protocol}//${location.host}${location.pathname}`;
+	update();
+
+	function update() {
+		const query = [];
+		tryPush('slack', slack);
+		tryPush('channel', channel, s => s.length > 1 && (s[0] === '#' || s[0] === '@'));
+		tryPush('upsource', upsource);
+		result.value = `${host.value.trim() || host.placeholder}?${query.join('&')}`;
+
+		function tryPush(key, element, predicate) {
+			const str = element.value.trim();
+			if (typeof predicate === 'function' ? predicate(str) : str)
+				query.push(`${key}=${encodeURIComponent(str)}`);
+		}
+	}
+
+	function copy() {
+		if (result.value) {
+			result.select();
+			document.execCommand('copy');
+		}
+	}
+</script>
+</body>
+</html>
