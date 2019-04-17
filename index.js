@@ -5,8 +5,8 @@ const _ = require('lodash');
 const bodyParser = require('body-parser');
 const ect = require('ect');
 const express = require('express');
-const path = require('path');
 const request = require('request');
+const url = require('url');
 
 const config = require('./config.json');
 _.defaults(config, {port: 3000});
@@ -118,7 +118,7 @@ function feedEventBean(body, query) {
 	if (_.isEmpty(query.upsource)) {
 		data.wrapUrl = (text) => text;
 	} else {
-		data.baseUrl = path.join(query.upsource, data.projectId);
+		data.baseUrl = url.resolve(query.upsource, data.projectId);
 		data.wrapUrl = (text, path) => `<${data.baseUrl}${path}|${text}>`;
 	}
 	data.tag = `[${data.projectId}/${data.reviewId}]`;
