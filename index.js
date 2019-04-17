@@ -56,6 +56,7 @@ function handle(req, res, skipValidate) {
 		res.sendStatus(501);
 		return;
 	}
+	console.log(dataType);
 	if (!_.isEmpty(query.channel))
 		payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
@@ -75,19 +76,30 @@ const generatePayload = {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
 		});
-		console.log('new comment by ' + data.userName);
 		return {
 			attachments: [{
-				fallback: `[${data.reviewLabel}] New comment by ${data.userName}`,
+				fallback: `${data.tag} New comment by ${data.userName}`,
 				pretext: [
-					`[${data.wrapUrl(data.reviewLabel)}]`,
-					data.wrapUrl('New comment', `?commentId=${data.commentId}`),
+					data.tagWithLink,
+					data.wrapUrl('New comment', `/review/${data.reviewId}?commentId=${data.commentId}`),
 					`by ${data.userName}`
 				].join(' '),
 				color: query.color,
 				text: data.commentText,
 				mrkdwn_in: ['text']
 			}]
+		};
+	},
+	ReviewCreatedFeedEventBean: (body, query) => {
+		const data = _.assign(feedEventBean(body, query), {
+			branch: _.get(body, 'data.branch')
+		});
+		return {
+			text: [
+				data.tagWithLink,
+				`Review created by ${data.userName} on branch`,
+				data.wrapUrl(data.branch, `/branch/${data.branch}`)
+			].join(' '),
 		};
 	}
 };
@@ -99,12 +111,13 @@ function feedEventBean(body, query) {
 		userName: _.get(body, 'data.base.actor.userName'),
 		userEmail: _.get(body, 'data.base.actor.userEmail')
 	};
-	data.reviewLabel = `${data.projectId}/${data.reviewId}`;
 	if (_.isEmpty(query.upsource)) {
 		data.wrapUrl = (text) => text;
 	} else {
-		data.reviewUrl = path.join(query.upsource, data.projectId, 'review', data.reviewId);
-		data.wrapUrl = (text, path) => `<${data.reviewUrl}${path}|${text}>`;
+		data.baseUrl = path.join(query.upsource, data.projectId);
+		data.wrapUrl = (text, path) => `<${data.baseUrl}${path}|${text}>`;
 	}
+	data.tag = `[${data.projectId}/${data.reviewId}]`;
+	data.tagWithLink = data.wrapUrl(data.tag, `/review/${data.reviewId}`);
 	return data;
 }
