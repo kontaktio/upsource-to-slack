@@ -15,14 +15,16 @@ config.presets = _.chain(config.presets)
 	.pickBy((preset, name) => isValid(preset) || console.error('invalid preset: ' + name))
 	.value();
 
-const page = ect({root: __dirname}).render('template.ect', {
-	presets: _.entries(config.presets)
-});
-
 const app = express();
 app.use(bodyParser.json());
-app.get('*', (req, res) => res.send(page));
+const render = _.partial(ect({root: __dirname}).render, 'template.ect');
+const entries = _.entries(config.presets);
 _.each(config.presets, (preset, name) => {
+	const page = render({
+		current: preset,
+		presets: entries
+	});
+	app.get('*/' + name, (req, res) => res.send(page));
 	app.post('*/' + name, (req, res) => {
 		console.log('use preset: ' + name);
 		const skip = _.isEmpty(req.query);
@@ -30,6 +32,8 @@ _.each(config.presets, (preset, name) => {
 		handle(req, res, skip);
 	});
 });
+const page = render({presets: entries});
+app.get('*', (req, res) => res.send(page));
 app.post('*', (req, res) => handle(req, res));
 app.listen(config.port);
 console.log('listening on port ' + config.port);

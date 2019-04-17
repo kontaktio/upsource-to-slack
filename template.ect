@@ -7,42 +7,45 @@
 		input {
 			width: 100%;
 		}
+
+		#result {
+			border: none;
+		}
 	</style>
 </head>
 <body>
+<h2>Upsource to Slack</h2>
 <div>
 	<p>
 		<label>
-			<span>Slack Webhook URL</span>
+			<span>Slack Webhook</span>
 			<input id="slack" oninput="update()"
 			       placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX">
 		</label>
 	</p>
 	<p>
 		<label>
-			<span>Channel</span>
-			<input id="channel" oninput="update()"
-			       placeholder="#channel, @user or empty for webhook default channel">
+			<span>Channel (optional, #channel or @user)</span>
+			<input id="channel" oninput="update()" placeholder="<%- @current?.channel %>">
 		</label>
 	</p>
 	<p>
 		<label>
-			<span>Upsource Home URL</span>
+			<span>Upsource Home</span>
 			<input id="upsource" oninput="update()"
-			       placeholder="http://your.upsource.server/">
+			       placeholder="<%- @current?.upsource || 'http://your.upsource.server/' %>">
 		</label>
 	</p>
 	<p>
 		<label>
-			<span>Upsource-to-Slack URL</span>
+			<span>Upsource-to-Slack Server (usually leave it alone)</span>
 			<input id="host" oninput="update()">
 		</label>
 	</p>
 	<p>
-		<label>
-			<button onclick="copy()">Copy</button>
-			<input id="result" readonly>
-		</label>
+		<span>Use this as your Upsource project webhook</span>
+		<label><input id="result" readonly></label>
+		<button onclick="copy()">Copy</button>
 	</p>
 </div>
 <div>
@@ -50,11 +53,7 @@
 	<ul>
 		<% for [key, value] in @presets: %>
 		<li>
-			<% if value?.upsource: %>
-			<a href="<%- value.upsource %>"><span><%= key %></span></a>
-			<% else: %>
-			<span><%= key %></span>
-			<% end %>
+			<a href="<%- key %>"><%= key %></a>
 		</li>
 		<% end %>
 	</ul>
@@ -65,7 +64,16 @@
 	const upsource = document.getElementById('upsource');
 	const host = document.getElementById('host');
 	const result = document.getElementById('result');
-	host.placeholder = `${location.protocol}//${location.host}${location.pathname}`;
+	host.value = host.placeholder = `${location.protocol}//${location.host}${location.pathname}`;
+	const query = {};
+	location.search.substr(1).split('&').forEach(str => {
+		const split = str.split('=');
+		query[split[0]] = decodeURIComponent(split[1]);
+	});
+	if (query.slack) slack.value = query.slack;
+	if (query.channel) channel.value = query.channel;
+	if (query.upsource) upsource.value = query.upsource;
+	if (query.host) host.value = query.host;
 	update();
 
 	function update() {
@@ -73,7 +81,9 @@
 		tryPush('slack', slack);
 		tryPush('channel', channel, s => s.length > 1 && (s[0] === '#' || s[0] === '@'));
 		tryPush('upsource', upsource);
-		result.value = `${host.value.trim() || host.placeholder}?${query.join('&')}`;
+		let url = host.value.trim() || host.placeholder;
+		if (query.length > 0) url += '?' + query.join('&');
+		result.value = url;
 
 		function tryPush(key, element, predicate) {
 			const str = element.value.trim();
