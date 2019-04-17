@@ -5,17 +5,15 @@ const _ = require('lodash');
 const bodyParser = require('body-parser');
 const ect = require('ect');
 const express = require('express');
+const path = require('path');
 const request = require('request');
 
 const config = require('./config.json');
 _.defaults(config, {port: 3000});
 config.presets = _.chain(config.presets)
 	.mapKeys((preset, name) => _.toLower(name))
-	.pickBy((preset, name) => {
-		if (isValid(preset)) return true;
-		console.error('invalid preset: ' + name);
-		return false;
-	}).value();
+	.pickBy((preset, name) => isValid(preset) || console.error('invalid preset: ' + name))
+	.value();
 
 const page = ect({root: __dirname}).render('template.ect', {
 	presets: _.entries(config.presets)
@@ -26,11 +24,13 @@ app.use(bodyParser.json());
 app.get('*', (req, res) => res.send(page));
 _.each(config.presets, (preset, name) => {
 	app.post('*/' + name, (req, res) => {
+		console.log('use preset: ' + name);
+		const skip = _.isEmpty(req.query);
 		_.defaults(req.query, preset);
-		handle(req, res);
+		handle(req, res, skip);
 	});
 });
-app.post('*', handle);
+app.post('*', (req, res) => handle(req, res));
 app.listen(config.port);
 console.log('listening on port ' + config.port);
 
@@ -41,47 +41,70 @@ function isValid(query) {
 	return true;
 }
 
-function handle(req, res) {
-	if (!isValid(req.query)) {
-		console.error('bad query: ' + req.query);
+function handle(req, res, skipValidate) {
+	const {body, query} = req;
+	if (!skipValidate && !isValid(query)) {
+		console.error('bad query:');
+		console.error(query);
 		res.sendStatus(400);
 		return;
 	}
-	const payload = generatePayload(req.body, req.query);
+	const dataType = _.get(body, 'dataType');
+	const payload = _.invoke(generatePayload, dataType, body, query);
 	if (_.isEmpty(payload)) {
+		console.warn('unknown data type: ' + dataType);
 		res.sendStatus(501);
 		return;
 	}
-	payload.channel = req.query.channel;
-	request.post({url: req.query.slack, json: payload}, (err, slackRes, slackBody) => {
+	if (!_.isEmpty(query.channel))
+		payload.channel = query.channel;
+	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
 			console.error(err);
 			res.sendStatus(500);
 			return;
 		}
-		console.log(slackRes.statusCode);
-		res.sendStatus(slackRes.statusCode);
+		console.log(`${slackRes.statusCode} ${slackBody}`);
+		res.status(slackRes.statusCode).send(slackBody);
 	});
 }
 
-function generatePayload(body, query) {
-	const dataType = _.get(body, 'dataType');
-	if (dataType === 'DiscussionFeedEventBean') {
-		const projectId = _.get(body, 'projectId');
-		const reviewId = _.get(body, 'data.base.reviewId');
-		const userName = _.get(body, 'data.base.actor.userName');
-		const commentId = _.get(body, 'data.commentId');
-		const commentText = _.get(body, 'data.commentText');
-		const baseUrl = `${query.upsource}/${projectId}/review/${reviewId}`;
-		console.log('new comment');
+const generatePayload = {
+	DiscussionFeedEventBean: (body, query) => {
+		const data = _.assign(feedEventBean(body, query), {
+			commentId: _.get(body, 'data.commentId'),
+			commentText: _.get(body, 'data.commentText')
+		});
+		console.log('new comment by ' + data.userName);
 		return {
 			attachments: [{
-				fallback: `[${projectId}/${reviewId}] New comment by ${userName}`,
-				pretext: `[<${baseUrl}|${projectId}/${reviewId}>] <${baseUrl}?commentId=${commentId}|New comment> by ${userName}`,
+				fallback: `[${data.reviewLabel}] New comment by ${data.userName}`,
+				pretext: [
+					`[${data.wrapUrl(data.reviewLabel)}]`,
+					data.wrapUrl('New comment', `?commentId=${data.commentId}`),
+					`by ${data.userName}`
+				].join(' '),
 				color: query.color,
-				text: commentText,
+				text: data.commentText,
 				mrkdwn_in: ['text']
 			}]
 		};
-	} else if (dataType) console.warn('unknown data type: ' + dataType);
+	}
+};
+
+function feedEventBean(body, query) {
+	const data = {
+		projectId: _.get(body, 'projectId'),
+		reviewId: _.get(body, 'data.base.reviewId'),
+		userName: _.get(body, 'data.base.actor.userName'),
+		userEmail: _.get(body, 'data.base.actor.userEmail')
+	};
+	data.reviewLabel = `${data.projectId}/${data.reviewId}`;
+	if (_.isEmpty(query.upsource)) {
+		data.wrapUrl = (text) => text;
+	} else {
+		data.reviewUrl = path.join(query.upsource, data.projectId, 'review', data.reviewId);
+		data.wrapUrl = (text, path) => `<${data.reviewUrl}${path}|${text}>`;
+	}
+	return data;
 }
