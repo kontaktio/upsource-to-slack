@@ -20,10 +20,7 @@ app.use(bodyParser.json());
 const render = _.partial(ect({root: __dirname}).render, 'template.ect');
 const entries = _.entries(config.presets);
 _.each(config.presets, (preset, name) => {
-	const page = render({
-		current: preset,
-		presets: entries
-	});
+	const page = render({current: preset, presets: entries});
 	app.get('*/' + name, (req, res) => res.send(page));
 	app.post('*/' + name, (req, res) => {
 		console.log('use preset: ' + name);
@@ -62,8 +59,7 @@ function handle(req, res, skipValidate) {
 		return;
 	}
 	console.log(dataType);
-	if (!_.isEmpty(query.channel))
-		payload.channel = query.channel;
+	if (!_.isEmpty(query.channel)) payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
 			console.error(err);
@@ -81,15 +77,12 @@ const generatePayload = {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
 		});
+		const path = `/review/${data.reviewId}?commentId=${data.commentId}`;
+		const link = data.wrapUrl('New comment', path);
 		return {
 			attachments: [{
 				fallback: `${data.tag} New comment by ${data.userName}`,
-				pretext: [
-					data.tagWithLink,
-					data.wrapUrl('New comment', `/review/${data.reviewId}?commentId=${data.commentId}`),
-					`by ${data.userName}`
-				].join(' '),
-				color: query.color,
+				pretext: `${data.tagWithLink} ${link} by ${data.userName}`,
 				text: data.commentText,
 				mrkdwn_in: ['text']
 			}]
@@ -99,12 +92,25 @@ const generatePayload = {
 		const data = _.assign(feedEventBean(body, query), {
 			branch: _.get(body, 'data.branch')
 		});
-		const array = [data.tagWithLink, `Review created by ${data.userName}`];
+		let text = `${data.tagWithLink} Review created by ${data.userName}`;
 		if (!_.isEmpty(data.branch)) {
-			array.push('on branch');
-			array.push(data.wrapUrl(data.branch, `/branch/${data.branch}`));
+			const path = `/branch/${data.branch}`;
+			const link = data.wrapUrl(data.branch, path);
+			text += ` on branch ${link}`;
 		}
-		return {text: array.join(' ')};
+		return {text: text};
+	},
+	RevisionAddedToReviewFeedEventBean: (body, query) => {
+		const data = _.assign(feedEventBean(body, query), {
+			revisionIds: _.get(body, 'data.revisionIds')
+		});
+		const length = data.revisionIds.length;
+		if (length > 0) {
+			let text = `${data.tagWithLink} ${length} commit`;
+			if (length > 1) text += 's';
+			text += ` added to review by ${data.userName}`;
+			return {text: text};
+		}
 	}
 };
 
