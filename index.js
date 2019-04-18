@@ -132,13 +132,32 @@ const generatePayload = {
 		return {text: `${data.tagWithLink} Review ${state} by ${data.userName}`};
 	},
 	RevisionAddedToReviewFeedEventBean: (body, query) => {
+		let fallback, pretext;
 		const length = _.get(body, 'data.revisionIds.length');
 		if (length > 0) {
 			const data = feedEventBean(body, query);
-			let text = `${data.tagWithLink} ${length} commit`;
-			if (length > 1) text += 's';
-			text += ` added to review by ${data.userName}`;
-			return {text: text};
+			fallback = data.tag;
+			pretext = data.tagWithLink;
+			addToBoth(` ${length} commit`);
+			if (length > 1) addToBoth('s');
+			addToBoth(` added to review by ${data.userName}`);
+			const text = _.chain(body.data.revisionIds).map(id => {
+				const label = `\`${id.substr(0, 7)}\``;
+				return data.wrapUrl(label, `/revision/${id}`);
+			}).join('\n').value();
+			return {
+				attachments: [{
+					fallback: fallback,
+					pretext: pretext,
+					text: text,
+					mrkdwn_in: ['text']
+				}]
+			};
+		}
+
+		function addToBoth(str) {
+			fallback += str;
+			pretext += str;
 		}
 	}
 };
