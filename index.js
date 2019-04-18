@@ -57,6 +57,7 @@ function handle(req, res, skipValidate) {
 	const payload = _.invoke(generatePayload, dataType, body, query);
 	if (_.isEmpty(payload)) {
 		console.warn('unknown data type: ' + dataType);
+		console.warn(body.data);
 		res.sendStatus(501);
 		return;
 	}
