@@ -59,6 +59,7 @@ function handle(req, res, skipValidate) {
 		return;
 	}
 	console.log(dataType);
+	console.log(body.data);
 	if (!_.isEmpty(query.channel)) payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
@@ -98,6 +99,14 @@ const generatePayload = {
 			const link = data.wrapUrl(data.branch, path);
 			text += ` on branch ${link}`;
 		}
+		return {text: text};
+	},
+	ReviewStateChangedFeedEventBean: (body, query) => {
+		const data = _.assign(feedEventBean(body, query), {
+			newState: _.get(body, 'data.newState')
+		});
+		const state = Number(data.newState) ? 'closed' : 'reopened';
+		let text = `${data.tagWithLink} Review ${state} by ${data.userName}`;
 		return {text: text};
 	},
 	RevisionAddedToReviewFeedEventBean: (body, query) => {

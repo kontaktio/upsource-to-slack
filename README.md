@@ -6,8 +6,8 @@
 - [ ] reviewed changes are accepted by a reviewer / a concern is raised about the changes
 - [ ] a new participant is added to a review
 - [ ] a review participant is removed
-- [ ] a review closed or reopened
-- [ ] a revision is added to a review
+- [x] a review closed or reopened
+- [x] a revision is added to a review
 - [ ] a new revision is detected
 - [ ] a new branch is detected
 - [ ] an existing branch is deleted
