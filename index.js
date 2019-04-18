@@ -98,13 +98,12 @@ const generatePayload = {
 		const data = _.assign(feedEventBean(body, query), {
 			branch: _.get(body, 'data.branch')
 		});
-		return {
-			text: [
-				data.tagWithLink,
-				`Review created by ${data.userName} on branch`,
-				data.wrapUrl(data.branch, `/branch/${data.branch}`)
-			].join(' '),
-		};
+		const array = [data.tagWithLink, `Review created by ${data.userName}`];
+		if (!_.isEmpty(data.branch)) {
+			array.push('on branch');
+			array.push(data.wrapUrl(data.branch, `/branch/${data.branch}`));
+		}
+		return {text: array.join(' ')};
 	}
 };
 
