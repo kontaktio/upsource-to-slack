@@ -3,7 +3,7 @@
 ## Support webhook
 - [x] a comment is added
 - [x] a review is created
-- [ ] reviewed changes are accepted by a reviewer / a concern is raised about the changes
+- [x] reviewed changes are accepted by a reviewer / a concern is raised about the changes
 - [ ] a new participant is added to a review
 - [ ] a review participant is removed
 - [x] a review closed or reopened

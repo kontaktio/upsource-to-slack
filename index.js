@@ -89,6 +89,21 @@ const generatePayload = {
 			}]
 		};
 	},
+	ParticipantStateChangedFeedEventBean: (body, query) => {
+		let state;
+		switch (_.get(body, 'data.newState')) {
+			case 2:
+				state = 'Changes accepted';
+				break;
+			case 3:
+				state = 'Concern raised';
+				break;
+			default:
+				return;
+		}
+		const data = feedEventBean(body, query);
+		return {text: `${data.tagWithLink} ${state} by ${data.userName}`};
+	},
 	ReviewCreatedFeedEventBean: (body, query) => {
 		const data = _.assign(feedEventBean(body, query), {
 			branch: _.get(body, 'data.branch')
@@ -102,19 +117,24 @@ const generatePayload = {
 		return {text: text};
 	},
 	ReviewStateChangedFeedEventBean: (body, query) => {
-		const data = _.assign(feedEventBean(body, query), {
-			newState: _.get(body, 'data.newState')
-		});
-		const state = Number(data.newState) ? 'closed' : 'reopened';
-		let text = `${data.tagWithLink} Review ${state} by ${data.userName}`;
-		return {text: text};
+		let state;
+		switch (_.get(body, 'data.newState')) {
+			case 0:
+				state = 'reopened';
+				break;
+			case 1:
+				state = 'closed';
+				break;
+			default:
+				return;
+		}
+		const data = feedEventBean(body, query);
+		return {text: `${data.tagWithLink} Review ${state} by ${data.userName}`};
 	},
 	RevisionAddedToReviewFeedEventBean: (body, query) => {
-		const data = _.assign(feedEventBean(body, query), {
-			revisionIds: _.get(body, 'data.revisionIds')
-		});
-		const length = data.revisionIds.length;
+		const length = _.get(body, 'data.revisionIds.length');
 		if (length > 0) {
+			const data = feedEventBean(body, query);
 			let text = `${data.tagWithLink} ${length} commit`;
 			if (length > 1) text += 's';
 			text += ` added to review by ${data.userName}`;
@@ -127,6 +147,7 @@ function feedEventBean(body, query) {
 	const data = {
 		projectId: _.get(body, 'projectId'),
 		reviewId: _.get(body, 'data.base.reviewId'),
+		reviewNumber: _.get(body, 'data.base.reviewNumber'),
 		userName: _.get(body, 'data.base.actor.userName'),
 		userEmail: _.get(body, 'data.base.actor.userEmail')
 	};
@@ -136,7 +157,7 @@ function feedEventBean(body, query) {
 		data.baseUrl = url.resolve(query.upsource, data.projectId);
 		data.wrapUrl = (text, path) => `<${data.baseUrl}${path}|${text}>`;
 	}
-	data.tag = `[${data.projectId}/${data.reviewId}]`;
+	data.tag = `[${data.projectId} #${data.reviewNumber}]`;
 	data.tagWithLink = data.wrapUrl(data.tag, `/review/${data.reviewId}`);
 	return data;
 }
