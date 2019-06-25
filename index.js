@@ -85,6 +85,7 @@ const kontaktUsers = {
 	'pawel@kontakt.io': '<@U0UCYTR19>',
 	'a.czopek@kontakt.io': '<@UH3DVRV7G>',
 	'm.kwiecien@kontakt.io': '<@U0UEBLS23>',
+	'adrian.ziobro@kontakt.io': '<@U0UEG0LLX>',
 };
 
 const mapKontaktUser = email => kontaktUsers[email] || email;
