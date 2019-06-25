@@ -265,7 +265,7 @@ function feedEventBean(body, query) {
 		data.wrapUrl = (text) => text;
 	} else {
 		data.baseUrl = url.resolve(query.upsource, data.projectId);
-		data.wrapUrl = (text, path) => `${data.baseUrl}:${config.port}${path}`;
+		data.wrapUrl = (text, path) => `${data.baseUrl}${path}`;
 	}
 	data.tag = `[${data.projectId} #${data.reviewNumber}]`;
 	data.tagWithLink = data.wrapUrl(data.tag, `/review/${data.reviewId}`);
