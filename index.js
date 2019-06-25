@@ -98,7 +98,6 @@ const Reactions = {
 
 const generatePayload = {
 	DiscussionFeedEventBean: (body, query) => {
-
 		const data = _.assign(feedEventBean(body, query), {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
@@ -151,6 +150,29 @@ const generatePayload = {
 				]
 			}]
 		};
+	},
+	NewParticipantInReviewFeedEventBean: (body, query) => {
+		if (body.data.role === 2) {
+			const data = feedEventBean(body, query);
+			data.reviewer = _.get(body, 'data.participant.userEmail');
+			return {
+				attachments: [{
+					fallback: `${data.reviewId} new participant.`,
+					color: `${Color.Accept}`,
+					author_name: mapKontaktUser(data.reviewer),
+					title: `${data.reviewId}`,
+					title_link: `${data.tagWithLink}`,
+					text: `Reviewer assigned ${mapKontaktUser(data.reviewer)}`,
+					fields: [
+						{
+							title: "Author",
+							value: mapKontaktUser(data.userEmail),
+							short: false
+						}
+					]
+				}]
+			};
+		}
 	},
 	ReviewStateChangedFeedEventBean: (body, query) => {
 		let state, icon, color;
