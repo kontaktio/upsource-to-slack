@@ -60,6 +60,7 @@ function handle(req, res, skipValidate) {
 	}
 	console.log(dataType);
 	console.log(body.data);
+	console.log(payload);
 	if (!_.isEmpty(query.channel)) payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
@@ -138,7 +139,7 @@ const generatePayload = {
 			attachments: [{
 				fallback: `${data.reviewId} created.`,
 				color: `${Color.Accept}`,
-				title: `${data.reviewId}`,
+				title: `${data.reviewId} ${data.branch}`,
 				title_link: `${link}`,
 				text: `Review created ⏳`,
 				fields: [
