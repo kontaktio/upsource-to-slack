@@ -59,8 +59,8 @@ function handle(req, res, skipValidate) {
 		return;
 	}
 	console.log(dataType);
-	console.log(body.data);
-	console.log(payload);
+	console.log(JSON.stringify(body.data));
+	console.log(JSON.stringify(payload));
 	if (!_.isEmpty(query.channel)) payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
@@ -225,19 +225,20 @@ const generatePayload = {
 				return;
 		}
 		const data = feedEventBean(body, query);
-		data.reviewer = _.get(body, 'data.base.userIds').find(({userEmail}) => userEmail !== data.userEmail);
+		const author =_.get(body, 'data.base.userIds').find(user => user.userEmail !== data.userEmail);
+		data.author = author && author.userEmail;
 		return {
 			attachments: [{
 				fallback: `${data.reviewId} ${state}.`,
 				color: `${color}`,
-				author_name: mapKontaktUser(data.reviewer),
+				author_name: mapKontaktUser(data.userEmail),
 				title: `${data.reviewId}`,
 				title_link: `${data.tagWithLink}`,
 				text: `${state} ${icon}`,
 				fields: [
 					{
 						title: "Author",
-						value: mapKontaktUser(data.userEmail),
+						value: mapKontaktUser(data.author),
 						short: false
 					}
 				]
