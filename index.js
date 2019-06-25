@@ -72,64 +72,154 @@ function handle(req, res, skipValidate) {
 	});
 }
 
+const Color = {
+	Accept: '#00DB66',
+	Concern: '#9879FA',
+	Close: '#616161'
+};
+
+const kontaktUsers = {
+	'a.musial@kontakt.io': '<@U4MCA9PRU>',
+	'a.kubera@kontakt.io': '<@U4MCA9PRU>',
+	'pawel@kontakt.io': '<@U0UCYTR19>',
+	'a.czopek@kontakt.io': '<@UH3DVRV7G>',
+	'm.kwiecien@kontakt.io': '<@U0UEBLS23>',
+};
+
+const mapKontaktUser = email => kontaktUsers[email] || email;
+
+const Reactions = {
+	Accept: [':smiley:', ':smile:', ':simple_smile:', ':satisfied:', ':+1:', ':thumbsup:', ':ok_hand:', ':clap:', ':muscle:', ':v:', ':wave:', ':facepunch:', ':metal:'],
+	Concern: [':unamused:', ':pensive:', ':disappointed:', ':no_mouth:', ':grimacing:', ':worried:', ':confused:', ':fearful:', ':fire:', ':thumbsdown:', ':suspect:', ':trollface:'],
+	randomAccept: () => Reactions.Accept[_.random(Reactions.Accept.length - 1)],
+	randomConcern: () => Reactions.Concern[_.random(Reactions.Accept.length - 1)],
+};
+
 const generatePayload = {
 	DiscussionFeedEventBean: (body, query) => {
+
 		const data = _.assign(feedEventBean(body, query), {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
 		});
-		const path = `/review/${data.reviewId}?commentId=${data.commentId}`;
-		const link = data.wrapUrl('New comment', path);
-		return {
-			attachments: [{
-				fallback: `${data.tag} New comment by ${data.userName}`,
-				pretext: `${data.tagWithLink} ${link} by ${data.userName}`,
-				text: data.commentText,
-				mrkdwn_in: ['text']
-			}]
-		};
-	},
-	ParticipantStateChangedFeedEventBean: (body, query) => {
-		let state;
-		switch (_.get(body, 'data.newState')) {
-			case 2:
-				state = 'Changes accepted';
-				break;
-			case 3:
-				state = 'Concern raised';
-				break;
-			default:
-				return;
+
+		if (data.commentText.toLocaleLowerCase().trim() === 'done') {
+			const path = `/review/${data.reviewId}?commentId=${data.commentId}`;
+			const link = data.wrapUrl('New comment', path);
+			return {
+				attachments: [{
+					fallback: `${data.reviewId} is ready for review.`,
+					color: `${Color.Accept}`,
+					title: `${data.reviewId}`,
+					title_link: `${link}`,
+					text: `Ready for review ⏳`,
+					fields: [
+						{
+							title: "Author",
+							value: mapKontaktUser(data.userEmail),
+							short: false
+						}
+					]
+				}]
+			};
 		}
-		const data = feedEventBean(body, query);
-		return {text: `${data.tagWithLink} ${state} by ${data.userName}`};
+		return null;
 	},
 	ReviewCreatedFeedEventBean: (body, query) => {
 		const data = _.assign(feedEventBean(body, query), {
 			branch: _.get(body, 'data.branch')
 		});
-		let text = `${data.tagWithLink} Review created by ${data.userName}`;
+		let link = `${data.tagWithLink}`;
 		if (!_.isEmpty(data.branch)) {
 			const path = `/branch/${data.branch}`;
-			const link = data.wrapUrl(data.branch, path);
-			text += ` on branch ${link}`;
+			link = data.wrapUrl(data.branch, path);
 		}
-		return {text: text};
+		return {
+			attachments: [{
+				fallback: `${data.reviewId} created.`,
+				color: `${Color.Accept}`,
+				title: `${data.reviewId}`,
+				title_link: `${link}`,
+				text: `Review created ⏳`,
+				fields: [
+					{
+						title: "Author",
+						value: mapKontaktUser(data.userEmail),
+						short: false
+					}
+				]
+			}]
+		};
 	},
 	ReviewStateChangedFeedEventBean: (body, query) => {
-		let state;
+		let state, icon, color;
 		switch (_.get(body, 'data.newState')) {
 			case 0:
-				state = 'reopened';
+				state = 'Reopened';
+				icon = ':thinking_face:';
+				color = Color.Accept;
 				break;
 			case 1:
-				state = 'closed';
+				state = 'Closed';
+				icon = '🙂';
+				color = Color.Close;
 				break;
 			default:
 				return;
 		}
 		const data = feedEventBean(body, query);
-		return {text: `${data.tagWithLink} Review ${state} by ${data.userName}`};
+		return {
+			attachments: [{
+				fallback: `${data.reviewId} ${state}.`,
+				color: `${color}`,
+				title: `${data.reviewId}`,
+				title_link: `${data.tagWithLink}`,
+				text: `Review ${state} ${icon}`,
+				fields: [
+					{
+						title: "Author",
+						value: mapKontaktUser(data.userEmail),
+						short: false
+					}
+				]
+			}]
+		};
+	},
+	ParticipantStateChangedFeedEventBean: (body, query) => {
+		let state, icon, color;
+		switch (_.get(body, 'data.newState')) {
+			case 2:
+				state = 'Changes accepted';
+				icon = Reactions.randomAccept();
+				color = Color.Accept;
+				break;
+			case 3:
+				state = 'Concern raised';
+				icon = Reactions.randomConcern();
+				color = Color.Concern;
+				break;
+			default:
+				return;
+		}
+		const data = feedEventBean(body, query);
+		data.reviewer = _.get(body, 'data.base.userIds').find(({userEmail}) => userEmail !== data.userEmail);
+		return {
+			attachments: [{
+				fallback: `${data.reviewId} ${state}.`,
+				color: `${color}`,
+				author_name: mapKontaktUser(data.reviewer),
+				title: `${data.reviewId}`,
+				title_link: `${data.tagWithLink}`,
+				text: `${state} ${icon}`,
+				fields: [
+					{
+						title: "Author",
+						value: mapKontaktUser(data.userEmail),
+						short: false
+					}
+				]
+			}]
+		};
 	},
 	RevisionAddedToReviewFeedEventBean: (body, query) => {
 		let fallback, pretext;
