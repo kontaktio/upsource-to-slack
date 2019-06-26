@@ -226,8 +226,8 @@ const generatePayload = {
 				return;
 		}
 		const data = feedEventBean(body, query);
-		const author =_.get(body, 'data.base.userIds').find(user => user.userEmail !== data.userEmail);
-		data.author = author && author.userEmail;
+		const authors =_.get(body, 'data.base.userIds').filter(user => user.userEmail !== data.userEmail);
+		data.authors = authors.map(a => mapKontaktUser(a.userEmail)).join(' ');
 		return {
 			attachments: [{
 				fallback: `${data.reviewId} ${state}.`,
@@ -239,7 +239,7 @@ const generatePayload = {
 				fields: [
 					{
 						title: "Author",
-						value: mapKontaktUser(data.author),
+						value: data.authors,
 						short: false
 					}
 				]
