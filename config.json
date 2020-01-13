@@ -1,4 +1,19 @@
 {
+	"reactions" : {
+	"accept": [
+		":smiley:", ":smile:", ":simple_smile:", ":satisfied:", ":+1:", ":thumbsup:", ":ok_hand:", ":clap:",
+		":muscle:", ":v:", ":wave:", ":facepunch:", ":metal:"
+	],
+	"concern": [
+		":unamused:", ":pensive:", ":disappointed:", ":no_mouth:", ":grimacing:", ":worried:", ":confused:",
+		":fearful:", ":fire:", ":thumbsdown:", ":suspect:", ":trollface:"
+	]
+	},
+	"color": {
+		"Accept": "#00DB66",
+		"Concern": "#9879FA",
+		"Close": "#616161"
+	},
 	"port": 3000,
 	"presets": {
 		"example": {
@@ -6,5 +21,13 @@
 			"channel": "#general",
 			"upsource": "http://your.upsource.server/"
 		}
+	},
+	"users": {
+		"a.musial@kontakt.io": "<@U4MCA9PRU>",
+		"a.kubera@kontakt.io": "<@U4MCA9PRU>",
+		"pawel@kontakt.io": "<@U0UCYTR19>",
+		"a.czopek@kontakt.io": "<@UH3DVRV7G>",
+		"m.kwiecien@kontakt.io": "<@U0UEBLS23>",
+		"adrian.ziobro@kontakt.io": "<@U0UEG0LLX>"
 	}
 }

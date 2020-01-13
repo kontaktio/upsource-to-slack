@@ -12,34 +12,37 @@ const config = require('./config.json');
 _.defaults(config, {port: 3000});
 config.presets = _.chain(config.presets)
 	.mapKeys((preset, name) => _.toLower(name))
-	.pickBy((preset, name) => isValid(preset) || console.error('invalid preset: ' + name))
+	.pickBy((preset, name) => isValid(preset) || console.error(`invalid preset: ${name}`))
 	.value();
 
 const app = express();
 app.use(bodyParser.json());
+
 const render = _.partial(ect({root: __dirname}).render, 'template.ect');
 const entries = _.entries(config.presets);
+
 _.each(config.presets, (preset, name) => {
 	const page = render({current: preset, presets: entries});
 	app.get('*/' + name, (req, res) => res.send(page));
 	app.post('*/' + name, (req, res) => {
-		console.log('use preset: ' + name);
+		console.log(`use preset: ${name}`);
 		const skip = _.isEmpty(req.query);
 		_.defaults(req.query, preset);
 		handle(req, res, skip);
 	});
 });
+
 const page = render({presets: entries});
 app.get('*', (req, res) => res.send(page));
 app.post('*', (req, res) => handle(req, res));
 app.listen(config.port);
-console.log('listening on port ' + config.port);
+console.log(`listening on port ${config.port}`);
 
 function isValid(query) {
 	const slack = _.get(query, 'slack');
 	if (!_.isString(slack)) return false;
-	if (!slack.startsWith('https://hooks.slack.com/services/')) return false;
-	return true;
+	return slack.startsWith('https://hooks.slack.com/services/');
+
 }
 
 function handle(req, res, skipValidate) {
@@ -53,7 +56,7 @@ function handle(req, res, skipValidate) {
 	const dataType = _.get(body, 'dataType');
 	const payload = _.invoke(generatePayload, dataType, body, query);
 	if (_.isEmpty(payload)) {
-		console.warn('unknown data type: ' + dataType);
+		console.warn(`unknown data type: ${dataType}`);
 		console.warn(body.data);
 		res.sendStatus(501);
 		return;
@@ -61,6 +64,7 @@ function handle(req, res, skipValidate) {
 	console.log(dataType);
 	console.log(JSON.stringify(body.data));
 	console.log(JSON.stringify(payload));
+
 	if (!_.isEmpty(query.channel)) payload.channel = query.channel;
 	request.post({url: query.slack, json: payload}, (err, slackRes, slackBody) => {
 		if (err) {
@@ -73,26 +77,13 @@ function handle(req, res, skipValidate) {
 	});
 }
 
-const Color = {
-	Accept: '#00DB66',
-	Concern: '#9879FA',
-	Close: '#616161'
-};
+const Color = config.color;
 
-const kontaktUsers = {
-	'a.musial@kontakt.io': '<@U4MCA9PRU>',
-	'a.kubera@kontakt.io': '<@U4MCA9PRU>',
-	'pawel@kontakt.io': '<@U0UCYTR19>',
-	'a.czopek@kontakt.io': '<@UH3DVRV7G>',
-	'm.kwiecien@kontakt.io': '<@U0UEBLS23>',
-	'adrian.ziobro@kontakt.io': '<@U0UEG0LLX>',
-};
-
-const mapKontaktUser = email => kontaktUsers[email] || email;
+const mapKontaktUser = email => config.users[email] || email;
 
 const Reactions = {
-	Accept: [':smiley:', ':smile:', ':simple_smile:', ':satisfied:', ':+1:', ':thumbsup:', ':ok_hand:', ':clap:', ':muscle:', ':v:', ':wave:', ':facepunch:', ':metal:'],
-	Concern: [':unamused:', ':pensive:', ':disappointed:', ':no_mouth:', ':grimacing:', ':worried:', ':confused:', ':fearful:', ':fire:', ':thumbsdown:', ':suspect:', ':trollface:'],
+	Accept: config.reactions.accept,
+	Concern: config.reactions.concern,
 	randomAccept: () => Reactions.Accept[_.random(Reactions.Accept.length - 1)],
 	randomConcern: () => Reactions.Concern[_.random(Reactions.Accept.length - 1)],
 };
@@ -116,7 +107,7 @@ const generatePayload = {
 					text: `Ready for review ⏳`,
 					fields: [
 						{
-							title: "Author",
+							title: 'Author',
 							value: mapKontaktUser(data.userEmail),
 							short: false
 						}
@@ -144,7 +135,7 @@ const generatePayload = {
 				text: `Review created ⏳`,
 				fields: [
 					{
-						title: "Author",
+						title: 'Author',
 						value: mapKontaktUser(data.userEmail),
 						short: false
 					}
@@ -166,7 +157,7 @@ const generatePayload = {
 					text: `Reviewer assigned ${mapKontaktUser(data.reviewer)}`,
 					fields: [
 						{
-							title: "Author",
+							title: 'Author',
 							value: mapKontaktUser(data.userEmail),
 							short: false
 						}
@@ -201,7 +192,7 @@ const generatePayload = {
 				text: `Review ${state} ${icon}`,
 				fields: [
 					{
-						title: "Author",
+						title: 'Author',
 						value: mapKontaktUser(data.userEmail),
 						short: false
 					}
@@ -238,7 +229,7 @@ const generatePayload = {
 				text: `${state} ${icon}`,
 				fields: [
 					{
-						title: "Author",
+						title: 'Author',
 						value: data.authors,
 						short: false
 					}
