@@ -83,9 +83,12 @@ const kontaktUsers = {
 	'a.musial@kontakt.io': '<@U4MCA9PRU>',
 	'a.kubera@kontakt.io': '<@U4MCA9PRU>',
 	'pawel@kontakt.io': '<@U0UCYTR19>',
-	'a.czopek@kontakt.io': '<@UH3DVRV7G>',
 	'm.kwiecien@kontakt.io': '<@U0UEBLS23>',
 	'adrian.ziobro@kontakt.io': '<@U0UEG0LLX>',
+	'v.panov@kontakt.io': '<@U010PACLKMH>',
+	'r.khozinov@kontakt.io': '<@USBCDSASY>',
+	'nico@kontakt.io': '<@USW9B8ZQD>',
+	'masa@kontakt.io': '<@USW9B8PC5>'
 };
 
 const mapKontaktUser = email => kontaktUsers[email] || email;
@@ -98,13 +101,17 @@ const Reactions = {
 };
 
 const generatePayload = {
+	doneComment: (data) => {
+		let test = new RegExp('^.?done.{0,3}$', 'i');
+		return test.test(data.commentText.trim());
+	},
 	DiscussionFeedEventBean: (body, query) => {
 		const data = _.assign(feedEventBean(body, query), {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
 		});
 
-		if (data.commentText.toLocaleLowerCase().trim() === 'done') {
+		if (this.doneComment(data)) {
 			const path = `/review/${data.reviewId}?commentId=${data.commentId}`;
 			const link = data.wrapUrl('New comment', path);
 			return {
