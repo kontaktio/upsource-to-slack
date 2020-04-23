@@ -18,8 +18,8 @@
 	"presets": {
 		"example": {
 			"slack": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
-			"channel": "#general",
-			"upsource": "http://your.upsource.server/"
+			"channel": "#review",
+			"upsource": "https://upsource.kontakt.io/"
 		}
 	},
 	"users": {
@@ -28,6 +28,11 @@
 		"pawel@kontakt.io": "<@U0UCYTR19>",
 		"a.czopek@kontakt.io": "<@UH3DVRV7G>",
 		"m.kwiecien@kontakt.io": "<@U0UEBLS23>",
-		"adrian.ziobro@kontakt.io": "<@U0UEG0LLX>"
+		"adrian.ziobro@kontakt.io": "<@U0UEG0LLX>",
+		"v.panov@kontakt.io": "<@U010PACLKMH>",
+		"r.khozinov@kontakt.io": "<@USBCDSASY>",
+		"nico@kontakt.io": "<@USW9B8ZQD>",
+		"masa@kontakt.io": "<@USW9B8PC5>"
+
 	}
 }
