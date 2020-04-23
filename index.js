@@ -89,13 +89,17 @@ const Reactions = {
 };
 
 const generatePayload = {
+	doneComment: (data) => {
+		let test = new RegExp('^.?done.{0,3}$', 'i');
+		return test.test(data.commentText.trim());
+	},
 	DiscussionFeedEventBean: (body, query) => {
 		const data = _.assign(feedEventBean(body, query), {
 			commentId: _.get(body, 'data.commentId'),
 			commentText: _.get(body, 'data.commentText')
 		});
 
-		if (data.commentText.toLocaleLowerCase().trim() === 'done') {
+		if (this.doneComment(data)) {
 			const path = `/review/${data.reviewId}?commentId=${data.commentId}`;
 			const link = data.wrapUrl('New comment', path);
 			return {
